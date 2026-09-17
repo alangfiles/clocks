@@ -87,6 +87,31 @@
     ];
     const starWarsReleaseDates = starWarsReleases.map(release => new Date(release.date));
 
+    // 20 widely cited predicted "end of the world" dates
+    const doomsdayPredictions = [
+      { title: "Millerite Great Disappointment", date: "1844-10-22", wikipediaUrl: "https://en.wikipedia.org/wiki/Great_Disappointment" },
+      { title: "Jehovah's Witnesses (1st)", date: "1914-10-01", wikipediaUrl: "https://en.wikipedia.org/wiki/Eschatology_of_Jehovah%27s_Witnesses" },
+      { title: "Jehovah's Witnesses (2nd)", date: "1925-01-01", wikipediaUrl: "https://en.wikipedia.org/wiki/Eschatology_of_Jehovah%27s_Witnesses" },
+      { title: "Edgar Cayce earth changes", date: "1936-01-01", wikipediaUrl: "https://en.wikipedia.org/wiki/Edgar_Cayce" },
+      { title: "Jehovah's Witnesses (3rd)", date: "1975-01-01", wikipediaUrl: "https://en.wikipedia.org/wiki/Eschatology_of_Jehovah%27s_Witnesses" },
+      { title: "Pat Robertson prediction", date: "1982-01-01", wikipediaUrl: "https://en.wikipedia.org/wiki/Pat_Robertson" },
+      { title: "Harold Camping (1st)", date: "1994-09-06", wikipediaUrl: "https://en.wikipedia.org/wiki/Harold_Camping" },
+      { title: "Heaven's Gate / Hale-Bopp", date: "1997-03-26", wikipediaUrl: "https://en.wikipedia.org/wiki/Heaven%27s_Gate_(religious_group)" },
+      { title: "Nostradamus 'King of Terror'", date: "1999-07-01", wikipediaUrl: "https://en.wikipedia.org/wiki/Nostradamus" },
+      { title: "Y2K", date: "2000-01-01", wikipediaUrl: "https://en.wikipedia.org/wiki/Year_2000_problem" },
+      { title: "Nibiru (Nancy Lieder)", date: "2003-05-15", wikipediaUrl: "https://en.wikipedia.org/wiki/Nibiru_cataclysm" },
+      { title: "Large Hadron Collider panic", date: "2008-09-10", wikipediaUrl: "https://en.wikipedia.org/wiki/Safety_of_high-energy_particle_collision_experiments" },
+      { title: "Harold Camping Rapture", date: "2011-05-21", wikipediaUrl: "https://en.wikipedia.org/wiki/Harold_Camping" },
+      { title: "Harold Camping (2nd)", date: "2011-10-21", wikipediaUrl: "https://en.wikipedia.org/wiki/Harold_Camping" },
+      { title: "Ronald Weinland prediction", date: "2012-05-27", wikipediaUrl: "https://en.wikipedia.org/wiki/Ronald_Weinland" },
+      { title: "Mayan calendar", date: "2012-12-21", wikipediaUrl: "https://en.wikipedia.org/wiki/2012_phenomenon" },
+      { title: "Blood moon prophecy", date: "2015-09-28", wikipediaUrl: "https://en.wikipedia.org/wiki/Blood_moon_prophecy" },
+      { title: "Nibiru (David Meade)", date: "2017-09-23", wikipediaUrl: "https://en.wikipedia.org/wiki/Nibiru_cataclysm" },
+      { title: "'Real' 2012 calendar drift", date: "2020-06-21", wikipediaUrl: "https://en.wikipedia.org/wiki/2012_phenomenon" },
+      { title: "Y2K38 problem", date: "2038-01-19", wikipediaUrl: "https://en.wikipedia.org/wiki/Year_2038_problem" }
+    ].filter(prediction => new Date(prediction.date) <= new Date());
+    const doomsdayDates = doomsdayPredictions.map(prediction => new Date(prediction.date));
+
     function getPredictedNextDate(releaseDates){
       const sortedDates = [...releaseDates].sort((first, second) => first - second);
       const totalSpanMilliseconds = sortedDates[sortedDates.length - 1] - sortedDates[0];
@@ -120,25 +145,38 @@
       return `${days}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
     }
 
-    function startCountdowns(){
-      const starWarsNextDate = getPredictedNextDate(starWarsReleaseDates);
-      document.getElementById("star-wars-date").textContent = starWarsNextDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-
-      const movieList = document.getElementById("star-wars-movie-list");
-      [...starWarsReleases]
+    function renderReleaseList(elementId, releases){
+      const list = document.getElementById(elementId);
+      [...releases]
         .sort((first, second) => new Date(first.date) - new Date(second.date))
         .forEach(release => {
           const item = document.createElement("li");
-          const title = document.createElement("span");
+          const title = document.createElement(release.wikipediaUrl ? "a" : "span");
           title.textContent = release.title;
+          if (release.wikipediaUrl) {
+            title.href = release.wikipediaUrl;
+            title.target = "_blank";
+            title.rel = "noopener noreferrer";
+          }
           const date = document.createElement("span");
           date.textContent = new Date(release.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
           item.append(title, date);
-          movieList.append(item);
+          list.append(item);
         });
+    }
+
+    function startCountdowns(){
+      const starWarsNextDate = getPredictedNextDate(starWarsReleaseDates);
+      document.getElementById("star-wars-date").textContent = starWarsNextDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+      renderReleaseList("star-wars-movie-list", starWarsReleases);
+
+      const doomsdayNextDate = getPredictedNextDate(doomsdayDates);
+      document.getElementById("doomsday-date").textContent = doomsdayNextDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+      renderReleaseList("doomsday-list", doomsdayPredictions);
 
       const update = () => {
         document.getElementById("star-wars-timer").textContent = formatCountdown(starWarsNextDate);
+        document.getElementById("doomsday-timer").textContent = formatCountdown(doomsdayNextDate);
         window.requestAnimationFrame(update);
       };
       window.requestAnimationFrame(update);
@@ -156,6 +194,16 @@
     <details class="movie-list">
       <summary>Show all movie release dates</summary>
       <ul id="star-wars-movie-list"></ul>
+    </details>
+  </section>
+  <section class="countdown-card">
+    <h2>Doomsday Countdown</h2>
+    <p class="countdown-detail">Predicted by adding the average gap between 20 widely cited "end of the world" predictions to the latest one on the list.</p>
+    <p class="countdown-timer" id="doomsday-timer">Calculating&hellip;</p>
+    <p class="countdown-detail">Predicted date: <span id="doomsday-date">&mdash;</span></p>
+    <details class="movie-list">
+      <summary>Show all doomsday predictions</summary>
+      <ul id="doomsday-list"></ul>
     </details>
   </section>
 </body>
