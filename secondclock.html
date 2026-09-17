@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Second Clock</title>
+  <style>
+    :root {
+      color: #17211f;
+      background: #e7e0cf;
+      font-family: Georgia, serif;
+    }
+
+    body {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-top: 16px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 16px;
+    }
+
+    canvas {
+      width: min(100%, 300px);
+      height: auto;
+      display: block;
+      margin: 32px auto 0;
+    }
+  </style>
+  <script src="clocks.js"></script>
+  <script>
+    function getTime() {
+      const clock = document.getElementById("clock");
+      const clockFace = document.getElementById("clock-face");
+      const update = () => {
+        const now = new Date();
+        const secondsOfDay = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() + now.getMilliseconds() / 1000;
+
+        // Single hand sweeps the full face once per day (86,400 seconds), so noon lands at the bottom
+        const second = (secondsOfDay / 86400) * 60;
+        drawClockFace(clockFace, { second }, "#7b3f9e", 12, 60, null, false);
+        clock.textContent = `${secondsOfDay.toFixed(0)} / 86,400 seconds`;
+
+        window.requestAnimationFrame(update);
+      };
+      window.requestAnimationFrame(update);
+    }
+  </script>
+</head>
+<body onload="getTime();">
+  <h1>Second Clock</h1>
+  <p><a href="index.html">&larr; Back to clock gallery</a></p>
+  <canvas id="clock-face" width="320" height="320" aria-label="Second clock analog face"></canvas>
+  <h2 id="clock">TI:ME</h2>
+  <p>A single hand counts the seconds of the day, from 0 to 86,400, sweeping the full face once a day so noon lands at the bottom.</p>
+</body>
+</html>

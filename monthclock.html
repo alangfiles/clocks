@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Month Clock</title>
+  <style>
+    :root {
+      color: #17211f;
+      background: #e7e0cf;
+      font-family: Georgia, serif;
+    }
+
+    body {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-top: 16px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 16px;
+    }
+
+    canvas {
+      width: min(100%, 300px);
+      height: auto;
+      display: block;
+      margin: 32px auto 0;
+    }
+  </style>
+  <script src="clocks.js"></script>
+  <script>
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    function getTime() {
+      const clock = document.getElementById("clock");
+      const clockFace = document.getElementById("clock-face");
+      const update = () => {
+        const now = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const dayFraction = (now.getDate() - 1)
+          + now.getHours() / 24
+          + now.getMinutes() / 1440
+          + now.getSeconds() / 86400
+          + now.getMilliseconds() / 86400000;
+        const hourFraction = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600 + now.getMilliseconds() / 3600000;
+        const secondFraction = now.getSeconds() + now.getMilliseconds() / 1000;
+
+        // Hour hand = month, minute hand = day of month, second hand = hour of day (12-hour cycle), 4th hand = seconds
+        const monthHand = now.getMonth() + dayFraction / daysInMonth;
+        const dayHand = (dayFraction / daysInMonth) * 60;
+        const hourHand = ((hourFraction % 12) / 12) * 60;
+
+        drawClockFace(clockFace, { hour: monthHand, minute: dayHand, second: hourHand }, "#b5502e", 12, 60, { value: secondFraction, color: "#266a69" });
+        clock.textContent = `${monthNames[now.getMonth()]} ${now.getDate()}, ${now.getHours() % 12 || 12}${now.getHours() < 12 ? "AM" : "PM"}`;
+
+        window.requestAnimationFrame(update);
+      };
+      window.requestAnimationFrame(update);
+    }
+  </script>
+</head>
+<body onload="getTime();">
+  <h1>Month Clock</h1>
+  <p><a href="index.html">&larr; Back to clock gallery</a></p>
+  <canvas id="clock-face" width="320" height="320" aria-label="Month clock analog face"></canvas>
+  <h2 id="clock">TI:ME</h2>
+  <p>The hour hand tracks the month, the minute hand tracks the day of the month, the second hand tracks the hour of the day (12-hour cycle), and a fourth hand tracks the seconds.</p>
+</body>
+</html>

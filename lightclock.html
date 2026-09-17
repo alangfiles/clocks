@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Well-Tempered Clock</title>
+  <style>
+    :root {
+      color: #17211f;
+      background: #e7e0cf;
+      font-family: Georgia, serif;
+    }
+
+    body {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    .clock-faces {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+      margin-top: 32px;
+    }
+
+    .clock-face {
+      margin: 0;
+    }
+
+    canvas {
+      width: min(100%, 300px);
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-top: 16px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin: 16px 0 0;
+    }
+
+    .clock-events {
+      list-style: none;
+      margin: 12px 0 0;
+      padding: 0;
+      line-height: 1.5;
+    }
+
+    .matching-times {
+      margin-top: 36px;
+    }
+
+    .converter {
+      margin-top: 36px;
+    }
+
+    .converter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .converter-row label {
+      font-weight: bold;
+    }
+
+    .converter-row input {
+      font: inherit;
+      width: 110px;
+      padding: 4px 8px;
+    }
+
+    @media (max-width: 600px) {
+      .clock-faces {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <script src="clocks.js"></script>
+  <script>
+    let currentSolarTimes = { sunrise: 6, sunset: 18 };
+
+    function getTime(){
+      const clock = document.getElementById("clock");
+      const oldClock = document.getElementById("old-clock");
+      const locationDisplay = document.getElementById("location");
+      let latitude = 40.4173;
+      let longitude = -82.9071;
+      let isFallback = true;
+      const updateLocation = (newLatitude, newLongitude, useFallback = false) => {
+        latitude = newLatitude;
+        longitude = newLongitude;
+        isFallback = useFallback;
+        const coordinates = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        locationDisplay.textContent = isFallback ? `Location: Ohio fallback (${coordinates})` : `Location: ${coordinates}`;
+      };
+
+      const update = () => {
+        const currentTime = new Date();
+        clock.textContent = `Well-Tempered Time: ${getNewTime(currentTime, latitude, longitude)}`;
+        oldClock.textContent = `Imperial Time: ${currentTime.toLocaleTimeString()}`;
+        const solarTimes = getSolarTimes(currentTime, latitude, longitude);
+        currentSolarTimes = solarTimes;
+        document.getElementById("imperial-sunset").textContent = formatClockTime(solarTimes.sunset);
+        document.getElementById("imperial-sunrise").textContent = formatClockTime(solarTimes.sunrise);
+        document.getElementById("imperial-noon").textContent = formatClockTime(solarTimes.noon);
+        document.getElementById("imperial-midnight").textContent = formatClockTime(solarTimes.noon + 12);
+        const daylightMilliseconds = (solarTimes.sunset - solarTimes.sunrise) * 3600000;
+        const nightMilliseconds = (24 - (solarTimes.sunset - solarTimes.sunrise)) * 3600000;
+        document.getElementById("imperial-daylight-hours").textContent = `${(daylightMilliseconds / 3600000).toFixed(2)} hours`;
+        document.getElementById("alan-daylight-second").textContent = formatMilliseconds(daylightMilliseconds / 43200);
+        document.getElementById("alan-night-second").textContent = formatMilliseconds(nightMilliseconds / 43200);
+        const matchingTimes = getMatchingTimes(currentTime, latitude, longitude);
+        document.getElementById("matching-times").textContent = matchingTimes.length
+          ? matchingTimes.map(formatClockTime).join(" and ")
+          : "No matching times today.";
+
+        // Well-Tempered Time parts (contains both rounded integers for text and exact floats for the canvas)
+        const alanTime = getAlanTimeParts(currentTime, latitude, longitude);
+        drawClockFace(document.getElementById("alan-clock-face"), alanTime, "#d86d35");
+
+        // Imperial Time with fractional seconds and minutes
+        const smoothImperialSecond = currentTime.getSeconds() + currentTime.getMilliseconds() / 1000;
+        const smoothImperialMinute = currentTime.getMinutes() + smoothImperialSecond / 60;
+        const smoothImperialHour = currentTime.getHours() + smoothImperialMinute / 60;
+
+        drawClockFace(document.getElementById("imperial-clock-face"), {
+          hour: smoothImperialHour,
+          minute: smoothImperialMinute,
+          second: smoothImperialSecond
+        }, "#266a69");
+
+        window.requestAnimationFrame(update);
+      };
+
+      updateLocation(latitude, longitude, true);
+      window.requestAnimationFrame(update);
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => updateLocation(coords.latitude, coords.longitude),
+          () => updateLocation(latitude, longitude, true),
+          { maximumAge: 3600000, timeout: 10000 }
+        );
+      }
+    }
+
+    function convertFromWtt(){
+      const wttHour = parseTimeInput(document.getElementById("wtt-input").value);
+      const output = document.getElementById("imperial-output");
+      if (wttHour === null) {
+        output.textContent = "Enter a time like 6:30 AM";
+        return;
+      }
+      const daylightHours = currentSolarTimes.sunset - currentSolarTimes.sunrise;
+      output.textContent = formatClockTime(wttHourToImperialHour(wttHour, currentSolarTimes.sunrise, daylightHours));
+    }
+
+    function convertFromImperial(){
+      const imperialHour = parseTimeInput(document.getElementById("imperial-input").value);
+      const output = document.getElementById("wtt-output");
+      if (imperialHour === null) {
+        output.textContent = "Enter a time like 6:30 AM";
+        return;
+      }
+      const daylightHours = currentSolarTimes.sunset - currentSolarTimes.sunrise;
+      output.textContent = formatClockTime(imperialHourToWttHour(imperialHour, currentSolarTimes.sunrise, daylightHours));
+    }
+  </script>
+</head>
+<body onload="getTime();">
+  <h1>Well-Tempered Clock</h1>
+  <p><a href="index.html">&larr; Back to clock gallery</a></p>
+  <p id="location">Location: Finding your location...</p>
+  <p>A clock based on your location. Well-Tempered Time is a wonderful new system where there are 12 hours of sunlight every day! Midnight is in the middle of the night, and noon is in the middle of the day. All of this beautiful time symmetry comes at the low price of "second variability" aka not all seconds are created equal. A small price to pay for such benefits!</p>
+  <section class="clock-faces">
+    <figure class="clock-face">
+      <canvas id="alan-clock-face" width="320" height="320" aria-label="Well-Tempered Time analog clock"></canvas>
+      <h2 id="clock">Well-Tempered Time: TI:ME</h2>
+      <ul class="clock-events">
+        <li>sunrise at 6:00 AM</li>
+        <li>sunset at 6:00 PM</li>
+        <li>mid day at 12:00 PM</li>
+        <li>mid night at 12:00 AM</li>
+        <li>daylight second: <span id="alan-daylight-second">TI:ME</span></li>
+        <li>night second: <span id="alan-night-second">TI:ME</span></li>
+      </ul>
+    </figure>
+    <figure class="clock-face">
+      <canvas id="imperial-clock-face" width="320" height="320" aria-label="Imperial Time analog clock"></canvas>
+      <h2 id="old-clock">Imperial Time: TI:ME</h2>
+      <ul class="clock-events">
+        <li>sunrise at <span id="imperial-sunrise">TI:ME</span></li>
+        <li>sunset at <span id="imperial-sunset">TI:ME</span></li>
+        <li>mid day at <span id="imperial-noon">TI:ME</span></li>
+        <li>mid night at <span id="imperial-midnight">TI:ME</span></li>
+        <li>hours of sunlight: <span id="imperial-daylight-hours">TI:ME</span></li>
+      </ul>
+    </figure>
+  </section>
+  <section class="matching-times">
+    <h2>Even a broken clock is right twice a day...</h2>
+    <p>Because Well-Tempered Time actually moves forward (at two different rates), there's not always matches unless the imperial time has sunrise or sunset before 6am/pm.</p>
+    <p id="matching-times">Finding matching times...</p>
+  </section>
+  <section class="converter">
+    <h2>Time Converter</h2>
+    <p>Enter a time in either system (e.g. "6:30 AM") to convert it using today's sunrise and sunset at your location.</p>
+    <div class="converter-row">
+      <label for="wtt-input">Well-Tempered Time</label>
+      <input type="text" id="wtt-input" placeholder="6:30 AM" oninput="convertFromWtt()">
+      <span>&rarr; Imperial Time: <span id="imperial-output">&mdash;</span></span>
+    </div>
+    <div class="converter-row">
+      <label for="imperial-input">Imperial Time</label>
+      <input type="text" id="imperial-input" placeholder="6:30 AM" oninput="convertFromImperial()">
+      <span>&rarr; Well-Tempered Time: <span id="wtt-output">&mdash;</span></span>
+    </div>
+  </section>
+</body>
+</html>
