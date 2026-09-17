@@ -71,6 +71,13 @@
       <p>A plain clock showing the current local time.</p>
     </li>
     <li class="clock-card">
+      <a href="counterclock.html">
+        <canvas id="counterclock-preview" width="160" height="160" aria-label="Counter Clock preview"></canvas>
+        Counter Clock
+      </a>
+      <p>The same current time, but every hand sweeps counterclockwise.</p>
+    </li>
+    <li class="clock-card">
       <a href="lightclock.html">
         <canvas id="lightclock-preview" width="160" height="160" aria-label="Well-Tempered Clock preview"></canvas>
         Well-Tempered Clock
@@ -105,6 +112,7 @@
     const clock24Preview = document.getElementById("clock24-preview");
     const monthclockPreview = document.getElementById("monthclock-preview");
     const secondclockPreview = document.getElementById("secondclock-preview");
+    const counterclockPreview = document.getElementById("counterclock-preview");
     let previewLatitude = 40.4173;
     let previewLongitude = -82.9071;
 
@@ -127,6 +135,8 @@
 
       const secondsOfDay = now.getHours() * 3600 + now.getMinutes() * 60 + localSecond;
       drawClockFace(secondclockPreview, { second: (secondsOfDay / 86400) * 60 }, "#7b3f9e", 12, 60, null, false);
+
+      drawClockFace(counterclockPreview, { hour: localHour, minute: localMinute, second: localSecond }, "#266a69", 12, 60, null, true, -1);
 
       window.requestAnimationFrame(updatePreviews);
     };

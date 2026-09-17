@@ -154,7 +154,7 @@ function getNewTime(input_date, latitude = 40.4173, longitude = -82.9071){
   return `${alanTime.displayHour}:${String(alanTime.intMinute).padStart(2, "0")}:${String(alanTime.intSecond).padStart(2, "0")} ${alanTime.period}`;
 }
 
-function drawClockFace(canvas, time, accentColor, hourDialSize = 12, minorTickCount = 60, extraHand = null, showHourMinuteHands = true){
+function drawClockFace(canvas, time, accentColor, hourDialSize = 12, minorTickCount = 60, extraHand = null, showHourMinuteHands = true, direction = 1){
   const context = canvas.getContext && canvas.getContext("2d");
   if (!context) {
     return;
@@ -205,16 +205,16 @@ function drawClockFace(canvas, time, accentColor, hourDialSize = 12, minorTickCo
 
   // Hour Hand (smoothly incorporates fractional minute, sweeps the full dial once per hourDialSize hours)
   if (showHourMinuteHands) {
-    drawHand(((time.hour % hourDialSize) * 2 * Math.PI / hourDialSize) - Math.PI / 2, radius * 0.52, 7, "#17211f");
+    drawHand((((time.hour % hourDialSize) * 2 * Math.PI / hourDialSize) * direction) - Math.PI / 2, radius * 0.52, 7, "#17211f");
     // Minute Hand (smoothly incorporates fractional second)
-    drawHand((time.minute * Math.PI / 30) - Math.PI / 2, radius * 0.74, 5, "#17211f");
+    drawHand((time.minute * Math.PI / 30 * direction) - Math.PI / 2, radius * 0.74, 5, "#17211f");
   }
   // Second Hand (smooth continuous sweep)
-  drawHand((time.second * Math.PI / 30) - Math.PI / 2, radius * 0.8, 2, accentColor);
+  drawHand((time.second * Math.PI / 30 * direction) - Math.PI / 2, radius * 0.8, 2, accentColor);
 
   // Optional 4th hand for clocks that need to track more than hour/minute/second
   if (extraHand) {
-    drawHand((extraHand.value * Math.PI / 30) - Math.PI / 2, radius * 0.86, 2, extraHand.color);
+    drawHand((extraHand.value * Math.PI / 30 * direction) - Math.PI / 2, radius * 0.86, 2, extraHand.color);
   }
 
   context.fillStyle = accentColor;
