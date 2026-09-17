@@ -44,15 +44,48 @@
       font-size: 0.9rem;
       margin: 4px 0 0;
     }
+
+    .movie-list {
+      margin-top: 16px;
+      text-align: left;
+    }
+
+    .movie-list summary {
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .movie-list ul {
+      list-style: none;
+      margin: 12px 0 0;
+      padding: 0;
+      font-size: 0.9rem;
+    }
+
+    .movie-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0;
+    }
   </style>
   <script>
     // Theatrical release dates for every mainline "Star Wars" movie since 1977
-    const starWarsReleaseDates = [
-      "1977-05-25", "1980-05-21", "1983-05-25",
-      "1999-05-19", "2002-05-16", "2005-05-19",
-      "2015-12-18", "2016-12-16", "2017-12-15", "2018-05-25", "2019-12-20",
-      "2026-05-22"
-    ].map(dateText => new Date(dateText));
+    const starWarsReleases = [
+      { title: "Star Wars: A New Hope", date: "1977-05-25" },
+      { title: "The Empire Strikes Back", date: "1980-05-21" },
+      { title: "Return of the Jedi", date: "1983-05-25" },
+      { title: "The Phantom Menace", date: "1999-05-19" },
+      { title: "Attack of the Clones", date: "2002-05-16" },
+      { title: "Revenge of the Sith", date: "2005-05-19" },
+      { title: "The Force Awakens", date: "2015-12-18" },
+      { title: "Rogue One", date: "2016-12-16" },
+      { title: "The Last Jedi", date: "2017-12-15" },
+      { title: "Solo: A Star Wars Story", date: "2018-05-25" },
+      { title: "The Rise of Skywalker", date: "2019-12-20" },
+      { title: "The Mandalorian & Grogu", date: "2026-05-22" }
+    ];
+    const starWarsReleaseDates = starWarsReleases.map(release => new Date(release.date));
 
     function getPredictedNextDate(releaseDates){
       const sortedDates = [...releaseDates].sort((first, second) => first - second);
@@ -91,6 +124,19 @@
       const starWarsNextDate = getPredictedNextDate(starWarsReleaseDates);
       document.getElementById("star-wars-date").textContent = starWarsNextDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 
+      const movieList = document.getElementById("star-wars-movie-list");
+      [...starWarsReleases]
+        .sort((first, second) => new Date(first.date) - new Date(second.date))
+        .forEach(release => {
+          const item = document.createElement("li");
+          const title = document.createElement("span");
+          title.textContent = release.title;
+          const date = document.createElement("span");
+          date.textContent = new Date(release.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+          item.append(title, date);
+          movieList.append(item);
+        });
+
       const update = () => {
         document.getElementById("star-wars-timer").textContent = formatCountdown(starWarsNextDate);
         window.requestAnimationFrame(update);
@@ -107,6 +153,10 @@
     <p class="countdown-detail">Predicted by adding the average gap between every mainline Star Wars release since 1977 to the latest movie, The Mandalorian &amp; Grogu.</p>
     <p class="countdown-timer" id="star-wars-timer">Calculating&hellip;</p>
     <p class="countdown-detail">Predicted date: <span id="star-wars-date">&mdash;</span></p>
+    <details class="movie-list">
+      <summary>Show all movie release dates</summary>
+      <ul id="star-wars-movie-list"></ul>
+    </details>
   </section>
 </body>
 </html>
