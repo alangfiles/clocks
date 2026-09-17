@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Countdowns</title>
+  <style>
+    :root {
+      color: #17211f;
+      background: #e7e0cf;
+      font-family: Georgia, serif;
+    }
+
+    body {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-top: 16px;
+    }
+
+    .countdown-card {
+      border: 1px solid #17211f;
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 32px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .countdown-card h2 {
+      font-size: 1.3rem;
+      margin: 0 0 8px;
+    }
+
+    .countdown-timer {
+      font-size: 2rem;
+      margin: 12px 0;
+    }
+
+    .countdown-detail {
+      font-size: 0.9rem;
+      margin: 4px 0 0;
+    }
+  </style>
+  <script>
+    // Theatrical release dates for every mainline "Star Wars" movie since 1977
+    const starWarsReleaseDates = [
+      "1977-05-25", "1980-05-21", "1983-05-25",
+      "1999-05-19", "2002-05-16", "2005-05-19",
+      "2015-12-18", "2016-12-16", "2017-12-15", "2018-05-25", "2019-12-20",
+      "2026-05-22"
+    ].map(dateText => new Date(dateText));
+
+    function getPredictedNextDate(releaseDates){
+      const sortedDates = [...releaseDates].sort((first, second) => first - second);
+      const totalSpanMilliseconds = sortedDates[sortedDates.length - 1] - sortedDates[0];
+      const averageIntervalMilliseconds = totalSpanMilliseconds / (sortedDates.length - 1);
+      const latestRelease = sortedDates[sortedDates.length - 1];
+
+      return new Date(latestRelease.getTime() + averageIntervalMilliseconds);
+    }
+
+    function formatCountdown(targetDate){
+      const now = new Date();
+      let remainingMs = targetDate - now;
+      if (remainingMs <= 0) {
+        return "It's (probably) out!";
+      }
+
+      const days = Math.floor(remainingMs / 86400000);
+      remainingMs -= days * 86400000;
+      const hours = Math.floor(remainingMs / 3600000);
+      remainingMs -= hours * 3600000;
+      const minutes = Math.floor(remainingMs / 60000);
+      remainingMs -= minutes * 60000;
+      const seconds = Math.floor(remainingMs / 1000);
+
+      if (days > 365) {
+        const years = Math.floor(days / 365);
+        const remainingDays = days % 365;
+        return `${years}y ${remainingDays}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+      }
+
+      return `${days}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+    }
+
+    function startCountdowns(){
+      const starWarsNextDate = getPredictedNextDate(starWarsReleaseDates);
+      document.getElementById("star-wars-date").textContent = starWarsNextDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+
+      const update = () => {
+        document.getElementById("star-wars-timer").textContent = formatCountdown(starWarsNextDate);
+        window.requestAnimationFrame(update);
+      };
+      window.requestAnimationFrame(update);
+    }
+  </script>
+</head>
+<body onload="startCountdowns();">
+  <h1>Countdowns</h1>
+  <p><a href="index.html">&larr; Back to clock gallery</a></p>
+  <section class="countdown-card">
+    <h2>Next Star Wars Movie</h2>
+    <p class="countdown-detail">Predicted by adding the average gap between every mainline Star Wars release since 1977 to the latest movie, The Mandalorian &amp; Grogu.</p>
+    <p class="countdown-timer" id="star-wars-timer">Calculating&hellip;</p>
+    <p class="countdown-detail">Predicted date: <span id="star-wars-date">&mdash;</span></p>
+  </section>
+</body>
+</html>
